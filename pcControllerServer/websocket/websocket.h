@@ -15,7 +15,7 @@
 
 
 typedef struct Handler {
-    void (*onMessage)(Socket socket);
+    void (*onMessage)(Socket socket, unsigned char payload[WS_BUFF_FRAME_SIZE]);
 } Handler;
 
 typedef struct WEBSocketServer {
@@ -29,10 +29,15 @@ typedef struct WEBSocketServer {
 static const char* GUIDKey;
 
 WEBSocketServer WEBSocket_init(int port, Handler* handler);
-short int WEBSocket_nextFrame(const char* request);
 void WEBSocket_acceptConnections(WEBSocketServer* wsServer);
 void WEBSocket_readWebSocketKeyFromLine(char* dst, const char* line);
-void WEBSocket_establishConnection(WEBSocketServer* wsServer, int connectionSocket);
+void WEBSocket_establishConnection(WEBSocketServer* wsServer, int connectionSocket); // Do handshake
 void WEBSocket_handleConnection(WEBSocketServer* wsServer, int connectionSocket);
-void WEBSocket_onPongFrame(unsigned char payload[WS_BUFF_FRAME_SIZE], const char* inputBuffer,  unsigned char payloadLen);
+void WEBSocket_performFrames(WEBSocketServer* ws, int connectionSocket, char inputBuffer[WS_BUFF_FRAME_SIZE]);
+void WEBSocket_ping(WEBSocketServer* ws, int connectionSocket, const char* optionalText);
+void WEBSocket_readPayload(unsigned char payload[WS_BUFF_FRAME_SIZE], char inputBuffer[WS_BUFF_FRAME_SIZE]);
+void WEBSocket_disconnect(WEBSocketServer* ws, int connectionSocket, const char* reason);
+void WEBSocket_send(WEBSocketServer* ws, int connectionSocket, int fin, const char* message);
+void WEBSocket_stop(WEBSocketServer* ws);
+
 #endif // WEBSOCKET_H

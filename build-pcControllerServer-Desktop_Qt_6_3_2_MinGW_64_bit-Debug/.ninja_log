@@ -1,0 +1,13 @@
+# ninja log v5
+4	59	6906615507752561	CMakeFiles/pcControllerServer.dir/misc/SHA1/sha1.c.obj	3989b9c7fa11b99e
+1	387	6906615511080815	CMakeFiles/pcControllerServer.dir/main.c.obj	f655aa01f10176a5
+2	401	6906615511220814	CMakeFiles/pcControllerServer.dir/socket/socket.c.obj	cd963b56babba336
+3	407	6906615511290811	CMakeFiles/pcControllerServer.dir/websocket/websocket.c.obj	b7e1aa2faab1999e
+407	443	6906615511630812	pcControllerServer.exe	50728fa0079999ff
+1	359	6906626573762197	CMakeFiles/pcControllerServer.dir/websocket/websocket.c.obj	b7e1aa2faab1999e
+359	397	6906626574023353	pcControllerServer.exe	50728fa0079999ff
+2	359	6906627164838218	CMakeFiles/pcControllerServer.dir/websocket/websocket.c.obj	b7e1aa2faab1999e
+359	397	6906627165113703	pcControllerServer.exe	50728fa0079999ff
+3	377	6906629377662614	CMakeFiles/pcControllerServer.dir/websocket/websocket.c.obj	b7e1aa2faab1999e
+2	383	6906629377804332	CMakeFiles/pcControllerServer.dir/main.c.obj	f655aa01f10176a5
+1	42	6906629427669593	pcControllerServer.exe	50728fa0079999ff
