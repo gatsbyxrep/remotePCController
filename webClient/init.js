@@ -13,11 +13,16 @@ debugButton.onclick = () => {
 debug.onclick = () => {
     debug.classList.add('not-active');
 }
+
 hotKeyButton.onclick = () => {
+    hotKeyButton.classList.add('selected');
+    touchPadButton.classList.remove('selected')
     hotKeys.classList.remove('not-active');
     touchPad.classList.add('not-active');
 }
 touchPadButton.onclick = () => {
+    hotKeyButton.classList.remove('selected');
+    touchPadButton.classList.add('selected')
     touchPad.classList.remove('not-active');
     hotKeys.classList.add('not-active');
 }
