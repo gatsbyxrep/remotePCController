@@ -35,30 +35,3 @@ void Socket_close(Socket socket) {
     }
     WSACleanup();
 }
-
-void TCPServer_handleConnections(TCPServer* server, void (*handler)(int, const char *)) {
-    printf("%s\n", "Start listening");
-    for(;;) {
-        struct sockaddr_in clientAddr;
-        int addrLen = sizeof(clientAddr);    
-        int connectionSocket = accept(server->socket, (struct sockaddr*)&clientAddr, &addrLen);
-        if(connectionSocket < 0) {
-            printf("accept() failed");
-            closesocket(connectionSocket);
-            return;
-        }
-        struct in_addr clientIP;
-        memcpy_s(&clientIP, 4, &clientAddr.sin_addr, 4);
-        printf("Accept completed (IP address of client = %s  port = %d) \n", inet_ntoa(clientIP),
-               ntohs(clientAddr.sin_port));
-
-        char inputBuff[1024];
-        if(recv(connectionSocket, inputBuff, sizeof(inputBuff), 0) < 0) {
-            printf("recv() failed");
-            closesocket(connectionSocket);
-            return;
-        }
-        handler(connectionSocket, inputBuff);
-        closesocket(connectionSocket);
-    }
-}

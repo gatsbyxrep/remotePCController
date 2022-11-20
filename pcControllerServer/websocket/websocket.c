@@ -23,6 +23,7 @@ void WEBSocket_readWebSocketKeyFromLine(char* dst, const char* request) {
 void WEBSocket_establishConnection(WEBSocketServer* wsServer, int connectionSocket) {
     char* line = NULL;
     char buffer[1024] = {0};
+    printf("Establish connection");
     if(recv(connectionSocket, buffer, 1024, 0) > 0) {
         if((line = strstr(buffer, "Sec-WebSocket-Key:")) != NULL) {
             char clientKey[64] = {0};
@@ -37,11 +38,12 @@ void WEBSocket_establishConnection(WEBSocketServer* wsServer, int connectionSock
 
             char response[131] = {0};
             snprintf(response,
-                     130,
-                     "%s%s%s%s", "HTTP/1.1 101 Switching Protocols\r\n",
+                     130, "%s%s%s%s",
+                     "HTTP/1.1 101 Switching Protocols\r\n",
                      "Upgrade: websocket\r\n"
                      "Connection: Upgrade\r\n"
-                     "Sec-WebSocket-Accept: ", key_out, "\r\n\r\n\r\n");
+                     "Sec-WebSocket-Accept: ", key_out,
+                     "\r\n\r\n\r\n");
             if(send(connectionSocket, response, strlen(response), 0) < 0) {
                 printf("Can't send handshake headers");
                 return;
@@ -50,20 +52,79 @@ void WEBSocket_establishConnection(WEBSocketServer* wsServer, int connectionSock
     }
 }
 
-void WEBSocket_disconnect(WEBSocketServer* ws, int connectionSocket) {
-    printf("Client has been disconected");
+void WEBSocket_disconnect(WEBSocketServer* ws, int connectionSocket, const char* reason) {
+    printf("Client has been disconected: %s \n", reason);
     Socket_close(connectionSocket);
     // TODO: Stop thread
 }
 
 
 
-void WEBSocket_onPongFrame(unsigned char payload[WS_BUFF_FRAME_SIZE], const char* inputBuffer,  unsigned char payloadLen) {
+void WEBSocket_send(WEBSocketServer* ws, int connectionSocket, int fin, const char* message) {
+    unsigned int messageSize = strlen(message);
+    char response[WS_BUFF_FRAME_SIZE] = {0};
+    response[0] = fin;
+    if(messageSize < 126) {
+        response[1] = messageSize;
+        messageSize += 2;
+    }
+    else {
+        response[1] = 126;
+        response[2] = (messageSize >> 8) & 0xFF;
+        response[3] = messageSize & 0xFF;
+        messageSize += 4;
+    }
+    strcat(response, message);
+    if(send(connectionSocket, response, messageSize, 0) == -1) {
+        WEBSocket_disconnect(ws, connectionSocket, "Cant answer");
+    }
+
+}
+
+void WEBSocket_printConnectionData(char inputBuffer[WS_BUFF_FRAME_SIZE]) {
+    printf("%s\n", "Frame recv");
+    printf("FIN: 0x%02X\n", inputBuffer[0] & 0x01);
+    printf("RSV1: 0x%02X\n", inputBuffer[0] & 0x02);
+    printf("RSV2: 0x%02X\n", inputBuffer[0] & 0x04);
+    printf("RSV3: 0x%02X\n", inputBuffer[0] & 0x08);
+    printf("frameType: 0x%02X\n", inputBuffer[0] & 0x0F);
+    printf("Mask: 0x%02x\n", inputBuffer[1] & 0x80 ? 1:0);
+}
+
+
+void WEBSocket_readPayload(unsigned char payload[WS_BUFF_FRAME_SIZE], char inputBuffer[WS_BUFF_FRAME_SIZE]) {
     char maskKey[4] = {0};
     for(unsigned int i = 0; i < 4; i++)
         maskKey[i] = inputBuffer[i + 2];
-    for(unsigned int i = 6, pl = 0; pl < payloadLen; i++, pl++)
+    for(unsigned int i = 6, pl = 0; pl < (inputBuffer[1] & 0x7F); i++, pl++)
         payload[pl] = inputBuffer[i] ^ maskKey[pl % 4];
+}
+
+
+void WEBSocket_performFrames(WEBSocketServer* ws, int connectionSocket, char inputBuffer[WS_BUFF_FRAME_SIZE]) {
+    char frameType = inputBuffer[0] & 0x0F; // Opcode
+    //unsigned char payloadLen = inputBuffer[1] & 0x7F;
+    unsigned char payload[WS_BUFF_FRAME_SIZE] = {0};
+    WEBSocket_readPayload(payload, inputBuffer);
+
+    // Close 0x88, text 0x81
+    switch(frameType) {
+        case WS_CLOSING_FRAME: {
+            WEBSocket_disconnect(ws, connectionSocket, "Closing frame");
+            return;
+        }
+        case WS_TEXT_FRAME: {
+            WEBSocket_send(ws, connectionSocket, 0x81, "");
+            ws->handler->onMessage(connectionSocket, payload);
+            break;
+        }
+        case WS_PONG_FRAME: {
+            printf("Payload_len: %d\n", inputBuffer[1] & 0x7F);
+            printf("Pong: \"%s\"\n", payload);
+            break;
+        }
+    }
+
 }
 
 void WEBSocket_handleConnection(WEBSocketServer* ws, int connectionSocket) {
@@ -71,31 +132,8 @@ void WEBSocket_handleConnection(WEBSocketServer* ws, int connectionSocket) {
     char inputBuffer[WS_BUFF_FRAME_SIZE] = {0};
     for(;;) {
         if(recv(connectionSocket, inputBuffer, WS_BUFF_FRAME_SIZE - 1, 0) > 0) {
-            printf("%s\n", "Frame recv");
-            char frameType = inputBuffer[0] & 0x0F; // Opcode
-            printf("FIN: 0x%02X\n", inputBuffer[0] & 0x01);
-            printf("RSV1: 0x%02X\n", inputBuffer[0] & 0x02);
-            printf("RSV2: 0x%02X\n", inputBuffer[0] & 0x04);
-            printf("RSV3: 0x%02X\n", inputBuffer[0] & 0x08);
-            printf("frameType: 0x%02X\n", frameType);
-            unsigned char payloadLen = inputBuffer[1] & 0x7F;
-            printf("Mask: 0x%02x\n", inputBuffer[1] & 0x80 ? 1:0);
-            unsigned char payload[WS_BUFF_FRAME_SIZE] = {0};
-
-            switch(frameType) {
-                case WS_CLOSING_FRAME: {
-                    WEBSocket_disconnect(ws, connectionSocket);
-                    break;
-                }
-                case WS_TEXT_FRAME: {
-                    ws->handler->onMessage(connectionSocket);
-                    break;
-                }
-                case WS_PONG_FRAME: {
-                    WEBSocket_onPongFrame(payload, inputBuffer, payloadLen);
-                    break;
-                }
-            }
+            WEBSocket_printConnectionData(inputBuffer);
+            WEBSocket_performFrames(ws, connectionSocket, inputBuffer);
         }
     }
 }
@@ -119,6 +157,11 @@ void WEBSocket_acceptConnections(WEBSocketServer* ws) {
 
         WEBSocket_handleConnection(ws, connectionSocket); // TODO: Move to thread
 
-        Socket_close(connectionSocket);
+       // Socket_close(connectionSocket);
     }
+}
+
+void WEBSocket_stop(WEBSocketServer *ws)
+{
+    Socket_close(ws->socket);
 }
