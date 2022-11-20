@@ -1,0 +1,32 @@
+<html>
+	<head> 
+		<script>
+			const socket = new WebSocket("ws://" + window.location.hostname + ":228")
+			socket.onmessage = (event) => {
+				console.log(event.data)
+			}
+			function sendRaw(cmdType) {
+				const performedArgs = Array.prototype.slice.call(arguments, 1).reduce((prev, current) => {
+							return prev += (current >>> 0).toString(2).padStart(8, 0)
+					}, (cmdType >>> 0).toString(2).padStart(8, 0))
+				//socket.send(performedArgs)
+				return performedArgs
+			}
+			
+			window.onload = () => {
+				document.querySelector('#sndBtn').onclick = () => {
+					document.querySelector('#debug').innerHTML += sendRaw(0, 10, 10)
+				}
+			}
+			
+			window.onbeforeunload = function() {
+				websocket.onclose = function () {} 
+				websocket.close()
+			};
+		</script>
+	</head>
+	<body>
+	<p id = 'debug' > chlen </p>
+	<button id = 'sndBtn'> SEND SEND SEND </button>
+	</body>
+</html>

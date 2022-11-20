@@ -1,0 +1,199 @@
+<html>
+	<script>
+		const socket = new WebSocket("ws:" + window.location.hostname + ":8081")
+		const ongoingTouches = [];
+		const prevDirection = { 
+			point: {
+				x: 0,
+				y: 0
+			},
+			time: null
+		}
+		function toBinary(num) {
+			return (num >>> 0).toString(2);
+		}
+		// Example POST method implementation:
+		// async function postData(url = '', data = {}) {
+		// 	// Default options are marked with *
+		// 	const response = await fetch(url, {
+		// 		method: 'POST', // *GET, POST, PUT, DELETE, etc.
+		// 		mode: 'cors', // no-cors, *cors, same-origin
+		// 		cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+		// 		credentials: 'same-origin', // include, *same-origin, omit
+		// 		headers: {
+		// 		'Content-Type': 'application/json'
+		// 		// 'Content-Type': 'application/x-www-form-urlencoded',
+		// 		},
+		// 		redirect: 'follow', // manual, *follow, error
+		// 		referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+		// 		body: JSON.stringify(data) // body data type must match "Content-Type" header
+		// 	});
+		// 	return response.json(); // parses JSON response into native JavaScript objects
+		// }
+
+		
+		function sendRaw(cmdType) {
+			const performedArgs = Array.prototype.slice.call(arguments, 1).reduce((prev, current) => {
+						return prev += (current >>> 0).toString(2).padStart(8, 0)
+				}, (cmdType >>> 0).toString(2).padStart(8, 0))
+				socket.send(performedArgs)
+		}
+		function sendMousePos(x, y) {
+			if(x > 255)
+				x = 255
+			if(y > 255)
+				y = 255
+			sendRaw(0, x, y)
+		}
+		function sendLBMClick(isDoubleTouch) {
+			postData(window.location.href + 'lbmClick', {isDoubleTouch});	
+		}
+
+
+		function copyTouch({ identifier, pageX, pageY }) {
+  			return { identifier, pageX, pageY };
+		}
+
+		function ongoingTouchIndexById(idToFind) {
+			for (let i = 0; i < ongoingTouches.length; i++) {
+				const id = ongoingTouches[i].identifier;
+
+				if (id === idToFind) {
+				return i;
+				}
+			}
+			return -1;    // not found
+		}
+		let lastClick=0;
+		function handleStart(evt) {
+			evt.preventDefault();
+			let date = new Date();
+			let time = date.getTime();
+			const time_between_taps = 200; // 200ms
+			if (time - lastClick < time_between_taps) {
+				// do stuff
+				sendLBMClick(true);
+				document.getElementById('debug').innerHTML ='gobvovodfofgofodsfoksdkfdsfsfksdlkfsldkf'
+			}
+			else{
+				sendLBMClick(false);
+			}
+			lastClick = time;
+			const el = document.getElementById('controllPanel');
+			const ctx = el.getContext('2d');
+			const touches = evt.changedTouches[0];
+
+
+				ongoingTouches.push(copyTouch(touches));
+
+				ctx.beginPath();
+				ctx.arc(touches.pageX, touches.pageY, 4, 0, 2 * Math.PI, false);  // a circle at the start
+				ctx.fillStyle = 'black';
+				ctx.fill();
+
+		}
+
+		function handleMove(evt) {
+			evt.preventDefault();
+			const el = document.getElementById('controllPanel');
+			const ctx = el.getContext('2d');
+			const touches = evt.changedTouches[0];
+
+			
+
+				const idx = ongoingTouchIndexById(touches.identifier);
+				if (idx >= 0) {
+					ctx.beginPath();
+					ctx.moveTo(ongoingTouches[idx].pageX, ongoingTouches[idx].pageY);
+					ctx.lineTo(touches.pageX, touches.pageY);
+					
+					const delta = { 
+						x: touches.pageX - prevDirection.point.x,
+						y: touches.pageY - prevDirection.point.y,
+						time: Date.now() - prevDirection.time
+					}
+					const direction = { 
+						x: delta.x > 0 ? 1 : -1, 
+						y: delta.y > 0 ? 1 : -1 
+					}
+					const speed = {
+						x: (Math.abs(delta.x) / delta.time) * 10,
+						y: (Math.abs(delta.y) / delta.time) * 10
+					}
+					document.getElementById('debug').innerHTML = speed.x + + speed.y
+					console.log(sendMousePos(direction.x * speed.x , direction.y * speed.y))
+
+					prevDirection.point.x = touches.pageX;
+					prevDirection.point.y = touches.pageY;
+					prevDirection.time = Date.now()
+
+					ctx.lineWidth = 4;
+					ctx.strokeStyle = 'black';
+					ctx.stroke();
+					ongoingTouches.splice(idx, 1, copyTouch(touches));  // swap in the new touch record
+				}
+			
+		}	
+		function handleEnd(evt) {
+			evt.preventDefault();
+			const el = document.getElementById('controllPanel');
+			const ctx = el.getContext('2d');
+
+			const touches = evt.changedTouches[0];
+			
+
+			
+
+				let idx = ongoingTouchIndexById(touches.identifier);
+
+				if (idx >= 0) {
+					ctx.lineWidth = 4;
+					ctx.fillStyle = 'black';
+					ctx.beginPath();
+					ctx.moveTo(ongoingTouches[idx].pageX, ongoingTouches[idx].pageY);
+					ctx.lineTo(touches.pageX, touches.pageY);
+					ctx.fillRect(touches.pageX - 4, touches.pageY - 4, 8, 8);  // and a square at the end
+					ongoingTouches.splice(idx, 1);  // remove it; we're done
+				} 
+			
+		}
+
+		function handleCancel(evt) {
+			evt.preventDefault();
+			const touches = evt.changedTouches[0];
+
+			
+				let idx = ongoingTouchIndexById(touches.identifier);
+				ongoingTouches.splice(idx, 1);  // remove it; we're done
+			
+		}
+
+		window.onload = () => {
+			// When true, moving the mouse draws on the canvas
+			let isDrawing = false;
+			let x = 0;
+			let y = 0;
+
+			const el = document.getElementById('controllPanel');
+			el.width = 1000;
+			el.height = 1000*0.8;
+
+			el.addEventListener('touchstart', handleStart);
+			el.addEventListener('touchend', handleEnd);
+			el.addEventListener('touchcancel', handleCancel);
+			el.addEventListener('touchmove', handleMove);
+		}
+	</script>
+	<link rel="stylesheet" href="style.css">
+	<body>
+		<div class = "mainApp">
+			<canvas id = "controllPanel"></canvas>
+			<BR>
+			<div id = "controllButtons">
+				<button id = "LMB" >LMB</button>
+				<button id = "RMB"> RMB</button>
+			</div>
+			<div id = "debug"></div>
+		</div>
+	</body>
+</html>
