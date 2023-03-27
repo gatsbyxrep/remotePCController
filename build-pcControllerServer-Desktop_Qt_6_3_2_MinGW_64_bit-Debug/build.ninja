@@ -73,6 +73,24 @@ build CMakeFiles/pcControllerServer.dir/misc/SHA1/sha1.c.obj: C_COMPILER__pcCont
   OBJECT_DIR = CMakeFiles\pcControllerServer.dir
   OBJECT_FILE_DIR = CMakeFiles\pcControllerServer.dir\misc\SHA1
 
+build CMakeFiles/pcControllerServer.dir/misc/datastructures/stack.c.obj: C_COMPILER__pcControllerServer_Debug E$:/remotePCController/pcControllerServer/misc/datastructures/stack.c || cmake_object_order_depends_target_pcControllerServer
+  DEP_FILE = CMakeFiles\pcControllerServer.dir\misc\datastructures\stack.c.obj.d
+  FLAGS = -g
+  OBJECT_DIR = CMakeFiles\pcControllerServer.dir
+  OBJECT_FILE_DIR = CMakeFiles\pcControllerServer.dir\misc\datastructures
+
+build CMakeFiles/pcControllerServer.dir/misc/datastructures/conqueue.c.obj: C_COMPILER__pcControllerServer_Debug E$:/remotePCController/pcControllerServer/misc/datastructures/conqueue.c || cmake_object_order_depends_target_pcControllerServer
+  DEP_FILE = CMakeFiles\pcControllerServer.dir\misc\datastructures\conqueue.c.obj.d
+  FLAGS = -g
+  OBJECT_DIR = CMakeFiles\pcControllerServer.dir
+  OBJECT_FILE_DIR = CMakeFiles\pcControllerServer.dir\misc\datastructures
+
+build CMakeFiles/pcControllerServer.dir/misc/logger/logger.c.obj: C_COMPILER__pcControllerServer_Debug E$:/remotePCController/pcControllerServer/misc/logger/logger.c || cmake_object_order_depends_target_pcControllerServer
+  DEP_FILE = CMakeFiles\pcControllerServer.dir\misc\logger\logger.c.obj.d
+  FLAGS = -g
+  OBJECT_DIR = CMakeFiles\pcControllerServer.dir
+  OBJECT_FILE_DIR = CMakeFiles\pcControllerServer.dir\misc\logger
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target pcControllerServer
@@ -81,7 +99,7 @@ build CMakeFiles/pcControllerServer.dir/misc/SHA1/sha1.c.obj: C_COMPILER__pcCont
 #############################################
 # Link the executable pcControllerServer.exe
 
-build pcControllerServer.exe: C_EXECUTABLE_LINKER__pcControllerServer_Debug CMakeFiles/pcControllerServer.dir/main.c.obj CMakeFiles/pcControllerServer.dir/socket/socket.c.obj CMakeFiles/pcControllerServer.dir/websocket/websocket.c.obj CMakeFiles/pcControllerServer.dir/misc/SHA1/sha1.c.obj
+build pcControllerServer.exe: C_EXECUTABLE_LINKER__pcControllerServer_Debug CMakeFiles/pcControllerServer.dir/main.c.obj CMakeFiles/pcControllerServer.dir/socket/socket.c.obj CMakeFiles/pcControllerServer.dir/websocket/websocket.c.obj CMakeFiles/pcControllerServer.dir/misc/SHA1/sha1.c.obj CMakeFiles/pcControllerServer.dir/misc/datastructures/stack.c.obj CMakeFiles/pcControllerServer.dir/misc/datastructures/conqueue.c.obj CMakeFiles/pcControllerServer.dir/misc/logger/logger.c.obj
   FLAGS = -g
   LINK_LIBRARIES = -lwsock32  -lws2_32  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\pcControllerServer.dir

@@ -1,13 +1,15 @@
 # ninja log v5
 4	59	6906615507752561	CMakeFiles/pcControllerServer.dir/misc/SHA1/sha1.c.obj	3989b9c7fa11b99e
-1	387	6906615511080815	CMakeFiles/pcControllerServer.dir/main.c.obj	f655aa01f10176a5
-2	401	6906615511220814	CMakeFiles/pcControllerServer.dir/socket/socket.c.obj	cd963b56babba336
-3	407	6906615511290811	CMakeFiles/pcControllerServer.dir/websocket/websocket.c.obj	b7e1aa2faab1999e
-407	443	6906615511630812	pcControllerServer.exe	50728fa0079999ff
-1	359	6906626573762197	CMakeFiles/pcControllerServer.dir/websocket/websocket.c.obj	b7e1aa2faab1999e
-359	397	6906626574023353	pcControllerServer.exe	50728fa0079999ff
-2	359	6906627164838218	CMakeFiles/pcControllerServer.dir/websocket/websocket.c.obj	b7e1aa2faab1999e
-359	397	6906627165113703	pcControllerServer.exe	50728fa0079999ff
-3	377	6906629377662614	CMakeFiles/pcControllerServer.dir/websocket/websocket.c.obj	b7e1aa2faab1999e
-2	383	6906629377804332	CMakeFiles/pcControllerServer.dir/main.c.obj	f655aa01f10176a5
-1	42	6906629427669593	pcControllerServer.exe	50728fa0079999ff
+2	404	6945575123647741	CMakeFiles/pcControllerServer.dir/main.c.obj	f655aa01f10176a5
+3	499	6930027123518904	CMakeFiles/pcControllerServer.dir/socket/socket.c.obj	cd963b56babba336
+1	30	6945542097044188	CMakeFiles/pcControllerServer.dir/misc/datastructures/queue.c.obj	988ebf15c1d98087
+1	440	7014598806920665	CMakeFiles/pcControllerServer.dir/websocket/websocket.c.obj	b7e1aa2faab1999e
+440	490	7014598807401986	pcControllerServer.exe	b4a37412c8fbac4
+3	55	6945501531407898	CMakeFiles/pcControllerServer.dir/misc/datastructures/stack.c.obj	ca67f8a2773dc007
+2	32	6945562927685921	CMakeFiles/pcControllerServer.dir/misc/datastructures/conqueue.c.obj	73ad0e8612901211
+3	53	7014720382882750	CMakeFiles/pcControllerServer.dir/misc/logger/logger.c.obj	4d0094bafc979310
+2	606	7014720388402043	CMakeFiles/pcControllerServer.dir/main.c.obj	f655aa01f10176a5
+6	57	7016424762788117	CMakeFiles/pcControllerServer.dir/misc/datastructures/conqueue.c.obj	73ad0e8612901211
+6	483	7016424767049332	CMakeFiles/pcControllerServer.dir/main.c.obj	f655aa01f10176a5
+4	497	7016424767184482	CMakeFiles/pcControllerServer.dir/websocket/websocket.c.obj	b7e1aa2faab1999e
+497	606	7016424768250117	pcControllerServer.exe	d2d5597dedfe884b
