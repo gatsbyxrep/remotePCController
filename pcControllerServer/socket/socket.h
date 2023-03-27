@@ -2,7 +2,10 @@
 #define	TCPSERVER_H
 
 #include <stdio.h>
-#include "windows.h"
+#include "../defines.h"
+#ifdef _WIN_
+    #include "windows.h"
+#endif
 
 
 typedef int Socket;

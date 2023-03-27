@@ -1,0 +1,4 @@
+E:/remotePCController/pcControllerServer/CMakeFiles/pcControllerServer.dir
+E:/remotePCController/pcControllerServer/CMakeFiles/INSTALL.dir
+E:/remotePCController/pcControllerServer/CMakeFiles/ALL_BUILD.dir
+E:/remotePCController/pcControllerServer/CMakeFiles/ZERO_CHECK.dir

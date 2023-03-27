@@ -33,5 +33,4 @@ void Socket_close(Socket socket) {
         printf("closesocket() failed");
         exit(-1);
     }
-    WSACleanup();
 }

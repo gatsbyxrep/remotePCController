@@ -3,41 +3,70 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "../misc/SHA1/sha1.h"
+#include <pthread.h>
+#include <semaphore.h>
 #include "../socket/socket.h"
+#include "../misc/datastructures/stack.h"
+#include "../misc/datastructures/conqueue.h"
+
+typedef enum  {
+    FRAME_TYPE_TEXT = 0x1,
+    FRAME_TYPE_BINARY = 0x2,
+    FRAME_TYPE_PING = 0x09,
+    FRAME_TYPE_PONG = 0x0A,
+    FRAME_TYPE_CLOSING = 0x08
+} WEBSocketFrameType;
+
+typedef enum {
+    SERVER_STATE_STOPPED,
+    SERVER_STATE_HANDLING,
+    SERVER_STATE_STOPPING,
+} WEBSocketServerState;
+
+typedef enum {
+   CONNECTION_STATE_FINISHED,
+   CONNECTION_STATE_ESTABLISHED
+} WEBSocketConnectionState;
 
 #define WS_BUFF_FRAME_SIZE 65552
-#define WS_TEXT_FRAME 0x01
-#define WS_PING_FRAME 0x09
-#define WS_PONG_FRAME 0x0A
-#define WS_CLOSING_FRAME 0x08
 #define SHA_DIGEST_LENGTH 20
 
 
-typedef struct Handler {
-    void (*onMessage)(Socket socket, unsigned char payload[WS_BUFF_FRAME_SIZE]);
-} Handler;
 
-typedef struct WEBSocketServer {
-    Socket socket;
-    Handler* handler;
+struct Handler;
+struct WEBSocketConnectionInfo;
+typedef struct {
+  WEBSocketServerState state;
+  unsigned int clientsMax;
+  Socket socket;
+  struct Handler* handler;
+  pthread_mutex_t mutex;
+  struct WEBSocketConnectionInfo* connections;
+  Stack* availableIds;
+  ConQueue* acceptsQueue;
+  unsigned int connectionsCount;
 } WEBSocketServer;
 
+typedef struct WEBSocketConnectionInfo {
+  WEBSocketConnectionState state;
+  int id;
+  int socket;
+  Stack* freePositions;
+  WEBSocketServer* ws;
+  pthread_t thread;
+} WEBSocketConnectionInfo;
 
-
+typedef int (*Reciever)(WEBSocketConnectionInfo* wsConnectionInfo, unsigned char payload[WS_BUFF_FRAME_SIZE], int inputSize, char* response);
+typedef struct Handler {
+    Reciever onMessage;
+    Reciever onBinary;
+} Handler;
 
 static const char* GUIDKey;
 
-WEBSocketServer WEBSocket_init(int port, Handler* handler);
-void WEBSocket_acceptConnections(WEBSocketServer* wsServer);
-void WEBSocket_readWebSocketKeyFromLine(char* dst, const char* line);
-void WEBSocket_establishConnection(WEBSocketServer* wsServer, int connectionSocket); // Do handshake
-void WEBSocket_handleConnection(WEBSocketServer* wsServer, int connectionSocket);
-void WEBSocket_performFrames(WEBSocketServer* ws, int connectionSocket, char inputBuffer[WS_BUFF_FRAME_SIZE]);
+WEBSocketServer WEBSocket_init(int port, Handler* handler, int clientsMax);
+void WEBSocket_processConnections(WEBSocketServer* wsServer);
 void WEBSocket_ping(WEBSocketServer* ws, int connectionSocket, const char* optionalText);
-void WEBSocket_readPayload(unsigned char payload[WS_BUFF_FRAME_SIZE], char inputBuffer[WS_BUFF_FRAME_SIZE]);
-void WEBSocket_disconnect(WEBSocketServer* ws, int connectionSocket, const char* reason);
-void WEBSocket_send(WEBSocketServer* ws, int connectionSocket, int fin, const char* message);
 void WEBSocket_stop(WEBSocketServer* ws);
 
 #endif // WEBSOCKET_H
