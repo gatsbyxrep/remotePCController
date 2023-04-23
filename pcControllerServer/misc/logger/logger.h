@@ -3,10 +3,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <pthread.h>
 
-extern pthread_mutex_t mutex;
-
-void LOG_print(const char* str);
+void LOG_printf(const char* format, ...);
 
 #endif // LOGGER_H

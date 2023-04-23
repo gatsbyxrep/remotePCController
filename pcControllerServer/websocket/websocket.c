@@ -1,6 +1,6 @@
 #include "websocket.h"
 #include "../misc/SHA1/sha1.h"
-
+#include "../misc/logger/logger.h"
 
 static const char* GUIDKey = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"; //36
 
@@ -13,13 +13,13 @@ static void WEBSocket_readWebSocketKeyFromLine(char* dst, const char* request) {
 }
 static void WEBSocket_establishConnection(WEBSocketServer* wsServer, int connectionSocket) {
     char* line = NULL;
-    char buffer[1024] = {0};
+    char buffer[600] = {0};
     printf("Establish connection");
-    if(recv(connectionSocket, buffer, 1024, 0) > 0) {
+    if(recv(connectionSocket, buffer, 600, 0) > 0) {
         if((line = strstr(buffer, "Sec-WebSocket-Key:")) != NULL) {
             char clientKey[64] = {0};
             WEBSocket_readWebSocketKeyFromLine(clientKey, line);
-            printf("%s\n", clientKey);
+            //printf("%s\n", clientKey);
             char hash[SHA_DIGEST_LENGTH];
             SHA1((unsigned char*)hash, clientKey, strlen(clientKey));
             ////////////////////////////Base64////////////////////////////////////
@@ -109,6 +109,7 @@ static short int WEBSocket_performFrames(WEBSocketConnectionInfo* wsConnectionIn
             break;
         }
         case FRAME_TYPE_TEXT: {
+            printf("text \n");
             responseSize = wsConnectionInfo->ws->handler->onMessage(wsConnectionInfo, payload, WS_BUFF_FRAME_SIZE, response);
             break;
         }
@@ -120,6 +121,7 @@ static short int WEBSocket_performFrames(WEBSocketConnectionInfo* wsConnectionIn
             break;
         }
         case FRAME_TYPE_BINARY: {
+            printf("binary type \n");
             responseSize = wsConnectionInfo->ws->handler->onBinary(wsConnectionInfo, payload, WS_BUFF_FRAME_SIZE, response);
             break;
         }
@@ -139,7 +141,8 @@ static short int WEBSocket_performFrames(WEBSocketConnectionInfo* wsConnectionIn
 
 static void* WEBSocket_handleConnection(void* args) {
     WEBSocketConnectionInfo* wsConnectionInfo = (WEBSocketConnectionInfo*)args;
-    unsigned long mode = 1; // Non-blocking mode
+    // Non-blocking mode windows
+    unsigned long mode = 1;
     ioctlsocket(wsConnectionInfo->socket, FIONBIO, &mode);
     for(;;) {
         char inputBuffer[WS_BUFF_FRAME_SIZE] = {0};
@@ -151,7 +154,7 @@ static void* WEBSocket_handleConnection(void* args) {
         }
         pthread_mutex_unlock(&wsConnectionInfo->ws->mutex);
         if(recv(wsConnectionInfo->socket, inputBuffer, WS_BUFF_FRAME_SIZE - 1, 0) > 0) {
-            WEBSocket_printConnectionData(inputBuffer);
+            //WEBSocket_printConnectionData(inputBuffer);
             if(WEBSocket_performFrames(wsConnectionInfo, inputBuffer) == 0) {
                pthread_mutex_lock(&wsConnectionInfo->ws->mutex);
                Stack_push(wsConnectionInfo->freePositions, (void*)(intptr_t)wsConnectionInfo->id);
@@ -172,7 +175,7 @@ WEBSocketServer WEBSocket_init(int port, Handler* handler, int clientsMax) {
     pthread_mutex_init(&mutex, NULL);
     WEBSocketConnectionInfo* connections = malloc(clientsMax * sizeof(WEBSocketConnectionInfo));
     Stack* availableIds = Stack_create();
-    Stack_push(availableIds, (void*)(intptr_t)clientsMax - 1); // TODO: fix this
+    Stack_push(availableIds, (void*)(intptr_t)clientsMax - 1);
     ConQueue* acceptsQueue = ConQueue_create();
     WEBSocketServer ws = {
         .state = SERVER_STATE_STOPPED,
@@ -214,6 +217,12 @@ static void* WEBSocket_acceptConnections(void* args) {
     for(;;) {
         pthread_mutex_lock(&ws->mutex);
         short int serverState = ws->state;
+        int clientsMax = ws->clientsMax;
+        int connectionCount = ws->connectionsCount;
+        if(clientsMax == connectionCount) {
+            pthread_mutex_unlock(&ws->mutex);
+            continue;
+        }
         pthread_mutex_unlock(&ws->mutex);
         if(serverState != SERVER_STATE_HANDLING) {
             printf("finish accepting");
@@ -262,7 +271,7 @@ void WEBSocket_processConnections(WEBSocketServer* ws) {
         int connectionSocket = (uintptr_t)ConQueue_pop(ws->acceptsQueue);
         printf("new con \n");
         int id = 0;
-        if(highestIndex < ws->clientsMax - 1) {
+        if(highestIndex <= ws->clientsMax - 1) {
             id = highestIndex++;
         } else {
             pthread_mutex_lock(&ws->mutex);
